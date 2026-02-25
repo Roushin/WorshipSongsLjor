@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worship Song Keys | Cloud Sync</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --bg: #f8fafc;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; color: var(--primary); margin-bottom: 1.5rem; }
+
+        .entry-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 2rem;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        input {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .status-bar {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            height: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            border: 2px solid #e2e8f0;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; cursor: pointer; }
+
+        @media (max-width: 600px) {
+            .entry-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎵 Worship Song Keys</h1>
+    
+    <div id="status" class="status-bar">Connecting to Cloud...</div>
+
+    <div class="entry-form">
+        <input type="text" id="songTitle" placeholder="Song Title">
+        <input type="text" id="songKey" placeholder="Key (e.g. G)">
+        <input type="text" id="worshipLead" placeholder="Lead">
+        <button id="addBtn" onclick="addSong()">Add Song</button>
+    </div>
+
+    <input type="text" id="searchBox" onkeyup="filterTable()" placeholder="🔍 Search songs, keys, or leads..." class="search-box">
+
+    <table id="songTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Song Title</th>
+                <th onclick="sortTable(1)">Key</th>
+                <th onclick="sortTable(2)">Lead</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7zeZjwsc9GRu3zleT7mB9jUDRzSgDlYYVTgX6KJWefCCs7zhvBMlt55lws0BZKL57/exec";
+    let songs = [];
+
+    // Auto-load on startup
+    window.onload = fetchData;
+
+    async function fetchData() {
+        const status = document.getElementById('status');
+        try {
+            const response = await fetch(SCRIPT_URL);
+            songs = await response.json();
+            renderTable(songs);
+            status.innerText = "✅ Cloud Synced";
+            status.style.color = "var(--success)";
+        } catch (e) {
+            status.innerText = "❌ Error loading cloud data";
+            status.style.color = "red";
+        }
+    }
+
+    async function addSong() {
+        const title = document.getElementById('songTitle').value;
+        const key = document.getElementById('songKey').value;
+        const lead = document.getElementById('worshipLead').value;
+        const btn = document.getElementById('addBtn');
+        const status = document.getElementById('status');
+
+        if (!title || !key || !lead) return alert("Fill all fields");
+
+        btn.disabled = true;
+        status.innerText = "⏳ Saving to Google Sheets...";
+
+        try {
+            // Send to Google Sheets
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors", 
+                body: JSON.stringify({ title, key, lead })
+            });
+
+            // Update local view immediately
+            songs.push({ songtitle: title, key: key, worshiplead: lead });
+            renderTable(songs);
+
+            // Clear inputs
+            document.getElementById('songTitle').value = "";
+            document.getElementById('songKey').value = "";
+            document.getElementById('worshipLead').value = "";
+            
+            status.innerText = "✅ Saved Successfully!";
+        } catch (e) {
+            status.innerText = "❌ Error saving to cloud";
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = data.map(song => `
+            <tr>
+                <td>${song.songtitle || ''}</td>
+                <td><strong>${song.key || ''}</strong></td>
+                <td>${song.worshiplead || ''}</td>
+            </tr>
+        `).join('');
+    }
+
+    function filterTable() {
+        const query = document.getElementById('searchBox').value.toLowerCase();
+        const filtered = songs.filter(s => 
+            (s.songtitle || '').toLowerCase().includes(query) || 
+            (s.key || '').toLowerCase().includes(query) || 
+            (s.worshiplead || '').toLowerCase().includes(query)
+        );
+        renderTable(filtered);
+    }
+
+    let asc = true;
+    function sortTable(n) {
+        const keys = ['songtitle', 'key', 'worshiplead'];
+        songs.sort((a, b) => {
+            let res = (a[keys[n]] || "").localeCompare(b[keys[n]] || "");
+            return asc ? res : -res;
+        });
+        asc = !asc;
+        renderTable(songs);
+    }
+</script>
+
+</body>
+</html>
