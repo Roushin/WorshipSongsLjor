@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="LJOR Songs">
-    <link rel="apple-touch-icon" href="1000050210.jpg">
+    <link rel="apple-touch-icon" href="images (11).jpeg">
     <link rel="manifest" href="manifest.json">
 
     <style>
@@ -25,7 +25,6 @@
             --row-hover: #f1f5f9;
         }
 
-        /* Dark Mode Colors */
         [data-theme="dark"] {
             --bg: #0f172a;
             --card: #1e293b;
@@ -79,21 +78,9 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .sync-info {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .status-msg { 
-            font-weight: 600; 
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-        }
-
-        .timestamp {
-            font-size: 0.75rem;
-            color: #64748b;
-        }
+        .sync-info { text-align: center; margin-bottom: 25px; }
+        .status-msg { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+        .timestamp { font-size: 0.75rem; color: #64748b; }
 
         .action-bar {
             display: flex;
@@ -131,7 +118,6 @@
             font-size: 14px;
             background: var(--input-bg);
             color: var(--text);
-            outline-color: var(--ljor-purple);
         }
 
         .btn { 
@@ -171,7 +157,9 @@
 
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 14px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background: var(--row-hover); color: var(--text); font-size: 0.8rem; text-transform: uppercase; }
+        th { background: var(--row-hover); color: var(--text); font-size: 0.8rem; text-transform: uppercase; cursor: pointer; user-select: none; }
+        th:hover { background-color: #cbd5e1; }
+        [data-theme="dark"] th:hover { background-color: #475569; }
         
         tr:hover { background-color: var(--row-hover); }
 
@@ -186,7 +174,7 @@
 <div class="container">
     <div class="header">
         <button class="dark-mode-toggle" onclick="toggleTheme()" id="themeIcon">🌙</button>
-        <img src="images(11).jpeg" alt="LJOR Logo" class="logo">
+        <img src="images (11).jpeg" alt="LJOR Logo" class="logo">
         <div class="action-bar">
             <button class="btn btn-refresh" onclick="fetchData()">🔄 Sync Cloud</button>
             <button class="btn btn-import" onclick="document.getElementById('csvInput').click()">📤 Import</button>
@@ -234,10 +222,10 @@
         <table id="songTable">
             <thead>
                 <tr>
-                    <th>Title</th>
-                    <th>Artist</th>
-                    <th>Key</th>
-                    <th>Lead</th>
+                    <th onclick="sortTable('songtitle')">Title ↕</th>
+                    <th onclick="sortTable('artist')">Artist ↕</th>
+                    <th onclick="sortTable('key')">Key ↕</th>
+                    <th onclick="sortTable('worshiplead')">Lead ↕</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -249,8 +237,8 @@
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxZRYdCEyvjHBSUx196vY9PBAflxVddwF6p135UgzOwnWA50eX2tcd3IR_B6OvnrhF/exec";
     let songs = [];
+    let sortDirection = {};
 
-    // Initialize Theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.body.setAttribute('data-theme', savedTheme);
     document.getElementById('themeIcon').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
@@ -282,6 +270,20 @@
         const now = new Date();
         const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         document.getElementById('lastSynced').innerText = `Last Synced: Today at ${timeStr}`;
+    }
+
+    // FIXED SORTING FUNCTION
+    function sortTable(key) {
+        sortDirection[key] = !sortDirection[key];
+        songs.sort((a, b) => {
+            let valA = (a[key] || "").toString().toLowerCase();
+            let valB = (b[key] || "").toString().toLowerCase();
+            
+            if (valA < valB) return sortDirection[key] ? -1 : 1;
+            if (valA > valB) return sortDirection[key] ? 1 : -1;
+            return 0;
+        });
+        renderTable(songs);
     }
 
     async function handleSubmit() {
@@ -324,9 +326,9 @@
     async function handleImport(event) {
         const file = event.target.files[0];
         if (!file) return;
-        if (!confirm("This will upload all songs in the CSV to your Google Sheet. Continue?")) return;
+        if (!confirm("This will upload all songs to the Cloud. Continue?")) return;
 
-        showStatus("Importing... please wait.", "orange");
+        showStatus("Importing...", "orange");
         const reader = new FileReader();
         reader.onload = async function(e) {
             const lines = e.target.result.split('\n').slice(1);
