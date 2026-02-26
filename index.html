@@ -3,206 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worship Song Keys | Cloud Sync</title>
+    <title>LJOR Song Manager</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LJOR Songs">
+    <link rel="apple-touch-icon" href="1000050210.jpg">
+    <link rel="manifest" href="manifest.json">
+
     <style>
-        :root {
-            --primary: #2563eb;
-            --success: #16a34a;
-            --bg: #f8fafc;
+        :root { 
+            --ljor-purple: #6a0dad; 
+            --danger: #ef4444; 
+            --success: #16a34a; 
+            --info: #0ea5e9;
+            --bg: #f8fafc; 
+            --card: #ffffff;
             --text: #1e293b;
+            --input-bg: #ffffff;
+            --border: #e2e8f0;
+            --row-hover: #f1f5f9;
         }
 
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
+        /* Dark Mode Colors */
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --input-bg: #334155;
+            --border: #475569;
+            --row-hover: #334155;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
             color: var(--text);
+            padding: 15px; 
             margin: 0;
-            padding: 15px;
+            transition: background 0.3s, color 0.3s;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: var(--card); 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
         }
 
-        h1 { text-align: center; color: var(--primary); margin-bottom: 1.5rem; }
-
-        .entry-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 10px;
-            margin-bottom: 2rem;
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 8px;
+        .header { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px; 
+            margin-bottom: 10px; 
+            position: relative;
         }
 
-        input {
-            padding: 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            outline: none;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: var(--primary);
-            color: white;
+        .dark-mode-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
             border: none;
-            border-radius: 6px;
+            font-size: 1.5rem;
             cursor: pointer;
-            font-weight: 600;
         }
 
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        .logo { 
+            width: 140px; 
+            height: auto; 
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-        .status-bar {
+        .sync-info {
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            height: 20px;
+            margin-bottom: 25px;
         }
+
+        .status-msg { 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: var(--ljor-purple);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .entry-form { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 12px; 
+            background: var(--row-hover); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-bottom: 25px; 
+        }
+
+        input, select { 
+            padding: 12px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            font-size: 14px;
+            background: var(--input-bg);
+            color: var(--text);
+            outline-color: var(--ljor-purple);
+        }
+
+        .btn { 
+            padding: 10px 14px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: white; 
+            transition: all 0.2s; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-add { background: var(--ljor-purple); width: 100%; font-size: 1rem; }
+        .btn-refresh { background: #64748b; }
+        .btn-import { background: var(--success); }
+        .btn-export { background: var(--info); }
+        .btn-edit { background: #f59e0b; padding: 6px 10px; }
+        .btn-delete { background: var(--danger); padding: 6px 10px; }
 
         .search-box {
-            width: 100%;
-            margin-bottom: 20px;
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid var(--border); 
+            border-radius: 10px; 
             box-sizing: border-box;
-            border: 2px solid #e2e8f0;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 20px;
         }
 
+        .table-wrapper { overflow-x: auto; }
+
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f1f5f9; cursor: pointer; }
+        th, td { padding: 14px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--row-hover); color: var(--text); font-size: 0.8rem; text-transform: uppercase; }
+        
+        tr:hover { background-color: var(--row-hover); }
 
         @media (max-width: 600px) {
-            .entry-form { grid-template-columns: 1fr; }
+            .action-bar { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+            .btn-refresh { grid-column: span 2; }
         }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
 <div class="container">
-    <h1>🎵 Worship Song Keys</h1>
-    
-    <div id="status" class="status-bar">Connecting to Cloud...</div>
-
-    <div class="entry-form">
-        <input type="text" id="songTitle" placeholder="Song Title">
-        <input type="text" id="songKey" placeholder="Key (e.g. G)">
-        <input type="text" id="worshipLead" placeholder="Lead">
-        <button id="addBtn" onclick="addSong()">Add Song</button>
+    <div class="header">
+        <button class="dark-mode-toggle" onclick="toggleTheme()" id="themeIcon">🌙</button>
+        <img src="1000050210.jpg" alt="LJOR Logo" class="logo">
+        <div class="action-bar">
+            <button class="btn btn-refresh" onclick="fetchData()">🔄 Sync Cloud</button>
+            <button class="btn btn-import" onclick="document.getElementById('csvInput').click()">📤 Import</button>
+            <button class="btn btn-export" onclick="exportToCSV()">📥 Export</button>
+            <input type="file" id="csvInput" style="display:none" accept=".csv" onchange="handleImport(event)">
+        </div>
     </div>
 
-    <input type="text" id="searchBox" onkeyup="filterTable()" placeholder="🔍 Search songs, keys, or leads..." class="search-box">
+    <div class="sync-info">
+        <div id="status" class="status-msg">Initialising...</div>
+        <div id="lastSynced" class="timestamp">Last Synced: Never</div>
+        <div id="songCount" class="badge">Songs: 0</div>
+    </div>
 
-    <table id="songTable">
-        <thead>
-            <tr>
-                <th onclick="sortTable(0)">Song Title</th>
-                <th onclick="sortTable(1)">Key</th>
-                <th onclick="sortTable(2)">Lead</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
+    <div class="entry-form">
+        <input type="hidden" id="rowId">
+        <input type="text" id="songTitle" placeholder="Song Title">
+        <input type="text" id="artist" placeholder="Artist">
+        <select id="songKey">
+            <option value="" disabled selected>Choose Key</option>
+            <optgroup label="Major Keys">
+                <option value="C">C</option><option value="C#">C# / Db</option>
+                <option value="D">D</option><option value="D#">D# / Eb</option>
+                <option value="E">E</option><option value="F">F</option>
+                <option value="F#">F# / Gb</option><option value="G">G</option>
+                <option value="G#">G# / Ab</option><option value="A">A</option>
+                <option value="A#">A# / Bb</option><option value="B">B</option>
+            </optgroup>
+            <optgroup label="Minor Keys">
+                <option value="Cm">Cm</option><option value="C#m">C#m</option>
+                <option value="Dm">Dm</option><option value="Ebm">Ebm</option>
+                <option value="Em">Em</option><option value="Fm">Fm</option>
+                <option value="F#m">F#m</option><option value="Gm">Gm</option>
+                <option value="G#m">G#m</option><option value="Am">Am</option>
+                <option value="Bbm">Bbm</option><option value="Bm">Bm</option>
+            </optgroup>
+        </select>
+        <input type="text" id="worshipLead" placeholder="Worship Lead">
+        <button id="submitBtn" class="btn btn-add" onclick="handleSubmit()">Add Song</button>
+    </div>
+
+    <input type="text" id="searchInput" onkeyup="filterTable(this.value)" placeholder="🔍 Search songs, artists, or keys..." class="search-box">
+
+    <div class="table-wrapper">
+        <table id="songTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Artist</th>
+                    <th>Key</th>
+                    <th>Lead</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7zeZjwsc9GRu3zleT7mB9jUDRzSgDlYYVTgX6KJWefCCs7zhvBMlt55lws0BZKL57/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxZRYdCEyvjHBSUx196vY9PBAflxVddwF6p135UgzOwnWA50eX2tcd3IR_B6OvnrhF/exec";
     let songs = [];
 
-    // Auto-load on startup
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeIcon').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
+
     window.onload = fetchData;
 
+    function toggleTheme() {
+        const current = document.body.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        document.getElementById('themeIcon').innerText = next === 'dark' ? '☀️' : '🌙';
+    }
+
     async function fetchData() {
-        const status = document.getElementById('status');
+        showStatus("Fetching cloud data...", "orange");
         try {
             const response = await fetch(SCRIPT_URL);
             songs = await response.json();
             renderTable(songs);
-            status.innerText = "✅ Cloud Synced";
-            status.style.color = "var(--success)";
-        } catch (e) {
-            status.innerText = "❌ Error loading cloud data";
-            status.style.color = "red";
+            updateTimestamp();
+            showStatus("✅ System Ready", "var(--success)");
+        } catch (e) { 
+            showStatus("❌ Connection Error", "var(--danger)"); 
         }
     }
 
-    async function addSong() {
+    function updateTimestamp() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lastSynced').innerText = `Last Synced: Today at ${timeStr}`;
+    }
+
+    async function handleSubmit() {
         const title = document.getElementById('songTitle').value;
+        const artist = document.getElementById('artist').value;
         const key = document.getElementById('songKey').value;
         const lead = document.getElementById('worshipLead').value;
-        const btn = document.getElementById('addBtn');
-        const status = document.getElementById('status');
+        const rowId = document.getElementById('rowId').value;
 
-        if (!title || !key || !lead) return alert("Fill all fields");
+        if (!title || !key) return alert("Song Title and Key are required.");
 
+        const btn = document.getElementById('submitBtn');
         btn.disabled = true;
-        status.innerText = "⏳ Saving to Google Sheets...";
+        showStatus("Saving...", "orange");
+
+        const payload = { action: rowId ? 'edit' : 'add', rowId: rowId, title, artist, key, lead };
 
         try {
-            // Send to Google Sheets
-            await fetch(SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors", 
-                body: JSON.stringify({ title, key, lead })
-            });
-
-            // Update local view immediately
-            songs.push({ songtitle: title, key: key, worshiplead: lead });
-            renderTable(songs);
-
-            // Clear inputs
-            document.getElementById('songTitle').value = "";
-            document.getElementById('songKey').value = "";
-            document.getElementById('worshipLead').value = "";
-            
-            status.innerText = "✅ Saved Successfully!";
+            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+            clearForm();
+            setTimeout(fetchData, 1500);
         } catch (e) {
-            status.innerText = "❌ Error saving to cloud";
-        } finally {
+            alert("Error saving data.");
             btn.disabled = false;
         }
     }
 
+    function exportToCSV() {
+        if (songs.length === 0) return alert("No songs to export.");
+        let csv = "Song Title,Artist,Key,Worship Lead\n";
+        songs.forEach(s => { csv += `"${s.songtitle}","${s.artist}","${s.key}","${s.worshiplead}"\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `LJOR_Backup_${new Date().toISOString().slice(0,10)}.csv`);
+        a.click();
+    }
+
+    async function handleImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (!confirm("This will upload all songs in the CSV to your Google Sheet. Continue?")) return;
+
+        showStatus("Importing... please wait.", "orange");
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const lines = e.target.result.split('\n').slice(1);
+            for (let line of lines) {
+                const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+                if (cols[0]) {
+                    await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        body: JSON.stringify({ action: 'add', title: cols[0], artist: cols[1]||'', key: cols[2]||'C', lead: cols[3]||'' })
+                    });
+                }
+            }
+            alert("Import complete!");
+            fetchData();
+        };
+        reader.readAsText(file);
+    }
+
+    async function deleteSong(rowId) {
+        if (!confirm("Delete this song?")) return;
+        showStatus("Deleting...", "var(--danger)");
+        try {
+            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: 'delete', rowId }) });
+            setTimeout(fetchData, 1500);
+        } catch (e) { alert("Delete failed."); }
+    }
+
+    function editSong(rowId, title, artist, key, lead) {
+        document.getElementById('rowId').value = rowId;
+        document.getElementById('songTitle').value = title;
+        document.getElementById('artist').value = artist;
+        document.getElementById('songKey').value = key;
+        document.getElementById('worshipLead').value = lead;
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "Update Song";
+        btn.style.background = "#f59e0b";
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
     function renderTable(data) {
         const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = data.map(song => `
+        document.getElementById('songCount').innerText = `Total Songs: ${data.length}`;
+        tbody.innerHTML = data.map(s => `
             <tr>
-                <td>${song.songtitle || ''}</td>
-                <td><strong>${song.key || ''}</strong></td>
-                <td>${song.worshiplead || ''}</td>
+                <td>${s.songtitle || ''}</td>
+                <td>${s.artist || ''}</td>
+                <td><strong>${s.key || ''}</strong></td>
+                <td>${s.worshiplead || ''}</td>
+                <td style="white-space:nowrap">
+                    <button class="btn btn-edit" onclick="editSong(${s.rowid}, '${s.songtitle}', '${s.artist}', '${s.key}', '${s.worshiplead}')">✎</button>
+                    <button class="btn btn-delete" onclick="deleteSong(${s.rowid})">🗑</button>
+                </td>
             </tr>
         `).join('');
     }
 
-    function filterTable() {
-        const query = document.getElementById('searchBox').value.toLowerCase();
-        const filtered = songs.filter(s => 
-            (s.songtitle || '').toLowerCase().includes(query) || 
-            (s.key || '').toLowerCase().includes(query) || 
-            (s.worshiplead || '').toLowerCase().includes(query)
-        );
-        renderTable(filtered);
+    function showStatus(msg, color) {
+        const s = document.getElementById('status');
+        s.innerText = msg; s.style.color = color;
     }
 
-    let asc = true;
-    function sortTable(n) {
-        const keys = ['songtitle', 'key', 'worshiplead'];
-        songs.sort((a, b) => {
-            let res = (a[keys[n]] || "").localeCompare(b[keys[n]] || "");
-            return asc ? res : -res;
-        });
-        asc = !asc;
-        renderTable(songs);
+    function clearForm() {
+        document.getElementById('rowId').value = "";
+        document.getElementById('songTitle').value = "";
+        document.getElementById('artist').value = "";
+        document.getElementById('songKey').value = "";
+        document.getElementById('worshipLead').value = "";
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "Add Song";
+        btn.style.background = "var(--ljor-purple)";
+        btn.disabled = false;
+    }
+
+    function filterTable(query) {
+        const q = query.toLowerCase();
+        renderTable(songs.filter(s => 
+            (s.songtitle || '').toLowerCase().includes(q) || 
+            (s.artist || '').toLowerCase().includes(q) ||
+            (s.key || '').toLowerCase().includes(q)
+        ));
     }
 </script>
-
 </body>
 </html>
